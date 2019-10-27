@@ -2,8 +2,11 @@
 // Created by blackgeorge on 8/16/19.
 //
 
-
 #include <cstdio>
+#include <iostream>
+#include <chrono>
+#include <thread>
+#include <tbb/task_group.h>
 #include "tbb/flow_graph.h"
 
 using namespace tbb::flow;
@@ -15,6 +18,12 @@ struct body {
         printf("%s\n", my_name.c_str());
     }
 };
+
+void print_num(int n)
+{
+    std::this_thread::sleep_for(std::chrono::seconds(n));
+    std::cout << "Look: " << n << std::endl;
+}
 
 int main()
 {
@@ -34,10 +43,22 @@ int main()
     make_edge(c, d);
     make_edge(a, e);
 
-    for (int i = 0; i < 3; ++i) {
-        start.try_put(continue_msg());
-        g.wait_for_all();
+//    for (int i = 0; i < 3; ++i) {
+//        start.try_put(continue_msg());
+//        g.wait_for_all();
+//    }
+
+    tbb::task_group tg;
+    for (auto i = 0; i < 4; ++i) {
+        tg.run(
+               [=]
+                {
+                    if (i == 0) return 1;
+                    print_num(i);
+                }
+                );
     }
+    tg.wait();
 
     return 0;
 }
